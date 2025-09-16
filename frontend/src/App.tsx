@@ -5,6 +5,7 @@ import DataHandling from './components/Players'
 import { BrowserRouter, Route, Routes } from 'react-router-dom'
 import Index from './pages/Index'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import Players from './pages/players'
 
 const queryClient = new QueryClient();
 
@@ -15,7 +16,7 @@ function App() {
       <BrowserRouter>
         <Routes>
           <Route path="/" element={<Index />} />
-          {/* <Route path="/players" element={< />} /> */}
+          <Route path="/players" element={< Players/>} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           {/* <Route path="*" element={<NotFound />} /> */}
         </Routes>
