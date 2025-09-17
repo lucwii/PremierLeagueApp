@@ -7,18 +7,17 @@ import Select from '../components/ui/Select';
 
 type Player = {
   name: string,
-  age: number,
+  age: number | null,
   nation: string,
   pos: string,
   team: string,
-  starts: number,
-  min: number,
-  gls: number,
-  ast: number,
-  xg: number,
-  xag: number,
+  starts: number | null,
+  min: number | null,
+  gls: number | null,
+  ast: number | null,
+  xg: number | null,
+  xag: number | null,
 }
-
 
 const getPositionColor = (position: string) => {
   switch(position.toLowerCase()) {
@@ -35,6 +34,10 @@ const Players: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedPosition, setSelectedPosition] = useState<string>('all');
+
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1);
+  const playersPerPage = 20;
 
   useEffect(() => {
     fetch("http://localhost:8080/api/v1/player")
@@ -58,6 +61,19 @@ const Players: React.FC = () => {
   });
 
   const uniquePositions = [...new Set(players.map(p => p.pos))];
+
+  // Pagination logic
+  const indexOfLastPlayer = currentPage * playersPerPage;
+  const indexOfFirstPlayer = indexOfLastPlayer - playersPerPage;
+  const currentPlayers = filteredPlayers.slice(indexOfFirstPlayer, indexOfLastPlayer);
+  const totalPages = Math.ceil(filteredPlayers.length / playersPerPage);
+
+  const goToPage = (page: number) => {
+    if (page >= 1 && page <= totalPages) {
+      setCurrentPage(page);
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
+  };
 
   if (loading) {
     return (
@@ -145,7 +161,7 @@ const Players: React.FC = () => {
 
         {/* Players Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-          {filteredPlayers.map((player, index) => (
+          {currentPlayers.map((player, index) => (
             <Card2 
               key={index} 
               className="bg-gradient-to-br from-white to-gray-50 hover:shadow-xl transition-all duration-500 hover:-translate-y-2 border-gray-200/50 group"
@@ -170,7 +186,7 @@ const Players: React.FC = () => {
                   <div className="flex items-center space-x-1 bg-purple-50 px-2 py-1 rounded-full">
                     <Star className="h-3 w-3 text-purple-500 fill-purple-500" />
                     <span className="text-sm font-bold text-purple-700">
-                      {player.age}
+                      {player.age ?? "-"}
                     </span>
                   </div>
                 </div>
@@ -180,14 +196,14 @@ const Players: React.FC = () => {
                   <div className="text-center bg-green-50 rounded-lg p-3">
                     <div className="flex items-center justify-center mb-1">
                       <Target className="h-4 w-4 text-green-600 mr-1" />
-                      <p className="text-2xl font-bold text-green-600">{player.gls}</p>
+                      <p className="text-2xl font-bold text-green-600">{player.gls ?? 0}</p>
                     </div>
                     <p className="text-xs text-gray-600">Goals</p>
                   </div>
                   <div className="text-center bg-blue-50 rounded-lg p-3">
                     <div className="flex items-center justify-center mb-1">
                       <Zap className="h-4 w-4 text-blue-600 mr-1" />
-                      <p className="text-2xl font-bold text-blue-600">{player.ast}</p>
+                      <p className="text-2xl font-bold text-blue-600">{player.ast ?? 0}</p>
                     </div>
                     <p className="text-xs text-gray-600">Assists</p>
                   </div>
@@ -195,26 +211,26 @@ const Players: React.FC = () => {
 
                 <div className="grid grid-cols-2 gap-2 mb-4">
                   <div className="text-center bg-purple-50 rounded p-2">
-                    <p className="text-sm font-bold text-purple-600">{player.xg.toFixed(1)}</p>
+                    <p className="text-sm font-bold text-purple-600">{Number(player.xg || 0).toFixed(1)}</p>
                     <p className="text-xs text-gray-600">xG</p>
                   </div>
                   <div className="text-center bg-indigo-50 rounded p-2">
-                    <p className="text-sm font-bold text-indigo-600">{player.xag.toFixed(1)}</p>
+                    <p className="text-sm font-bold text-indigo-600">{Number(player.xag || 0).toFixed(1)}</p>
                     <p className="text-xs text-gray-600">xAG</p>
                   </div>
                 </div>
 
                 <div className="border-t pt-3">
                   <div className="flex justify-between items-center text-sm mb-2">
-                    <span className="text-gray-600">Starts: {player.starts}</span>
-                    <span className="text-gray-600">Min: {player.min}</span>
+                    <span className="text-gray-600">Starts: {player.starts ?? 0}</span>
+                    <span className="text-gray-600">Min: {player.min ?? 0}</span>
                   </div>
                 </div>
 
                 {/* Nationality */}
                 <div className="flex items-center space-x-2 text-sm text-gray-600 mt-3">
                   <MapPin className="h-3 w-3" />
-                  <span>{player.nation}</span>
+                  <span>{player.nation || "-"}</span>
                 </div>
               </div>
             </Card2>
@@ -227,6 +243,39 @@ const Players: React.FC = () => {
             <Users size={64} className="mx-auto text-gray-400 mb-4" />
             <h3 className="text-xl font-medium text-gray-900 mb-2">No players found</h3>
             <p className="text-gray-500">Try adjusting your search or filters</p>
+          </div>
+        )}
+
+        {/* Pagination */}
+        {totalPages > 1 && (
+          <div className="flex justify-center items-center space-x-2 mt-8">
+            <button
+              onClick={() => goToPage(currentPage - 1)}
+              disabled={currentPage === 1}
+              className="px-3 py-1 rounded bg-gray-200 disabled:opacity-50 hover:bg-gray-300"
+            >
+              Prev
+            </button>
+            {[...Array(totalPages)].map((_, i) => (
+              <button
+                key={i}
+                onClick={() => goToPage(i + 1)}
+                className={`px-3 py-1 rounded ${
+                  currentPage === i + 1
+                    ? "bg-purple-600 text-white"
+                    : "bg-gray-200 hover:bg-gray-300"
+                }`}
+              >
+                {i + 1}
+              </button>
+            ))}
+            <button
+              onClick={() => goToPage(currentPage + 1)}
+              disabled={currentPage === totalPages}
+              className="px-3 py-1 rounded bg-gray-200 disabled:opacity-50 hover:bg-gray-300"
+            >
+              Next
+            </button>
           </div>
         )}
       </div>
