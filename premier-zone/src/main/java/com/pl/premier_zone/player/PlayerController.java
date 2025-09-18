@@ -6,6 +6,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping(path = "api/v1/player")
@@ -20,25 +21,45 @@ public class PlayerController {
 
     @GetMapping
     public List<Player> getPlayers(
-        @RequestParam(required = false) String team,
-        @RequestParam(required = false) String name,
-        @RequestParam(required = false) String position,
-        @RequestParam(required = false) String nation){
-        if(team != null && position != null) {
-            return playerService.getPlayersByTeamAndPosition(team, position);
+            @RequestParam(required = false) String team,
+            @RequestParam(required = false) String name, // Ovo je ispravno
+            @RequestParam(required = false) String position,
+            @RequestParam(required = false) String nation) {
+
+        System.out.println("Received params - name: " + name + ", position: " + position + ", team: " + team + ", nation: " + nation);
+
+        // Kombinovana pretraga umesto if/else if
+        List<Player> filteredPlayers = playerService.getPlayers();
+
+        if (name != null && !name.trim().isEmpty()) {
+            System.out.println("Filtering by name: " + name);
+            filteredPlayers = filteredPlayers.stream()
+                    .filter(p -> p.getName().toLowerCase().contains(name.toLowerCase()))
+                    .collect(Collectors.toList());
         }
-        if(team != null) {
-            return playerService.getPlayersByName(name);
+
+        if (position != null && !position.trim().isEmpty()) {
+            System.out.println("Filtering by position: " + position);
+            filteredPlayers = filteredPlayers.stream()
+                    .filter(p -> p.getPos().equalsIgnoreCase(position))
+                    .collect(Collectors.toList());
         }
-        if(nation != null) {
-            return playerService.getPlayersByNation(nation);
+
+        if (team != null && !team.trim().isEmpty()) {
+            System.out.println("Filtering by team: " + team);
+            filteredPlayers = filteredPlayers.stream()
+                    .filter(p -> p.getTeam().equalsIgnoreCase(team))
+                    .collect(Collectors.toList());
         }
-        else if(position != null) {
-            return playerService.getPlayersByPosition(position);
+
+        if (nation != null && !nation.trim().isEmpty()) {
+            System.out.println("Filtering by nation: " + nation);
+            filteredPlayers = filteredPlayers.stream()
+                    .filter(p -> p.getNation().equalsIgnoreCase(nation))
+                    .collect(Collectors.toList());
         }
-        else {
-            return playerService.getPlayers();
-        }
+
+        return filteredPlayers;
     }
 
     @PostMapping

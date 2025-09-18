@@ -34,39 +34,52 @@ const Players: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedPosition, setSelectedPosition] = useState<string>('all');
+  const [selectedTeam, setSelectedTeam] = useState<string>('all')
 
   // Pagination state
   const [currentPage, setCurrentPage] = useState(1);
   const playersPerPage = 20;
 
   useEffect(() => {
-    fetch("http://localhost:8080/api/v1/player")
+    let url = "http://localhost:8080/api/v1/player"
+    const params = new URLSearchParams();
+  
+    if(searchTerm.trim()) params.append("name", searchTerm.trim());
+    if(selectedPosition !== "all") params.append("position", selectedPosition);
+    if(selectedTeam !== 'all') params.append("team", selectedTeam);
+  
+    if(params.toString()) {
+      url += `?${params.toString()}`
+    }
+  
+    console.log("Fetching URL:", url); // Debug
+  
+    fetch(url)
       .then(res => res.json())
       .then(data => {
+        console.log("Received data:", data.length, "players"); // Debug
         setPlayers(data);
+        setCurrentPage(1);
       })
       .catch(err => {
         console.error(err)
       })
       .finally(() => setLoading(false))
-  }, [])
+  }, [searchTerm, selectedPosition, selectedTeam])
 
-  // Filter players
-  const filteredPlayers = players.filter(player => {
-    const matchesSearch = player.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         player.team.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesPosition = selectedPosition === 'all' || player.pos === selectedPosition;
-    
-    return matchesSearch && matchesPosition;
-  });
+
 
   const uniquePositions = [...new Set(players.map(p => p.pos))];
+  const uniqueTeams = [...new Set(players.map(p => p.team))];
+
 
   // Pagination logic
-  const indexOfLastPlayer = currentPage * playersPerPage;
-  const indexOfFirstPlayer = indexOfLastPlayer - playersPerPage;
-  const currentPlayers = filteredPlayers.slice(indexOfFirstPlayer, indexOfLastPlayer);
-  const totalPages = Math.ceil(filteredPlayers.length / playersPerPage);
+  // Pagination logic
+const indexOfLastPlayer = currentPage * playersPerPage;
+const indexOfFirstPlayer = indexOfLastPlayer - playersPerPage;
+const currentPlayers = players.slice(indexOfFirstPlayer, indexOfLastPlayer);
+const totalPages = Math.ceil(players.length / playersPerPage);
+
 
   const goToPage = (page: number) => {
     if (page >= 1 && page <= totalPages) {
@@ -140,6 +153,19 @@ const Players: React.FC = () => {
             </div>
             
             <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Filter by Team</label>
+              <Select
+                value={selectedTeam}
+                onChange={(e) => setSelectedTeam(e.target.value)}
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+              >
+                <option value="all">All Teams</option>
+                {uniqueTeams.map(team => (
+                  <option key={team} value={team}>{team}</option>
+                ))}
+              </Select>
+            </div>
+            <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">Filter by Position</label>
               <Select
                 value={selectedPosition}
@@ -155,8 +181,9 @@ const Players: React.FC = () => {
           </div>
           
           <div className="mt-4 text-sm text-gray-600">
-            Showing {filteredPlayers.length} of {players.length} players
+            Showing {currentPlayers.length} of {players.length} players
           </div>
+
         </div>
 
         {/* Players Grid */}
@@ -238,7 +265,7 @@ const Players: React.FC = () => {
         </div>
 
         {/* No results */}
-        {filteredPlayers.length === 0 && (
+        {currentPlayers.length === 0 && (
           <div className="text-center py-12">
             <Users size={64} className="mx-auto text-gray-400 mb-4" />
             <h3 className="text-xl font-medium text-gray-900 mb-2">No players found</h3>
