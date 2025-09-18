@@ -34,7 +34,8 @@ const Players: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedPosition, setSelectedPosition] = useState<string>('all');
-  const [selectedTeam, setSelectedTeam] = useState<string>('all')
+  const [selectedTeam, setSelectedTeam] = useState<string>('all');
+  const [selectedNation, setSelectedNation] = useState<string>('all');
 
   // Pagination state
   const [currentPage, setCurrentPage] = useState(1);
@@ -47,6 +48,7 @@ const Players: React.FC = () => {
     if(searchTerm.trim()) params.append("name", searchTerm.trim());
     if(selectedPosition !== "all") params.append("position", selectedPosition);
     if(selectedTeam !== 'all') params.append("team", selectedTeam);
+    if(selectedNation !== 'all') params.append("nation", selectedNation);
   
     if(params.toString()) {
       url += `?${params.toString()}`
@@ -65,20 +67,20 @@ const Players: React.FC = () => {
         console.error(err)
       })
       .finally(() => setLoading(false))
-  }, [searchTerm, selectedPosition, selectedTeam])
+  }, [searchTerm, selectedPosition, selectedTeam, selectedNation])
 
 
 
   const uniquePositions = [...new Set(players.map(p => p.pos))];
   const uniqueTeams = [...new Set(players.map(p => p.team))];
+  const uniqueNations = [...new Set(players.map(p => p.nation))];
 
 
   // Pagination logic
-  // Pagination logic
-const indexOfLastPlayer = currentPage * playersPerPage;
-const indexOfFirstPlayer = indexOfLastPlayer - playersPerPage;
-const currentPlayers = players.slice(indexOfFirstPlayer, indexOfLastPlayer);
-const totalPages = Math.ceil(players.length / playersPerPage);
+  const indexOfLastPlayer = currentPage * playersPerPage;
+  const indexOfFirstPlayer = indexOfLastPlayer - playersPerPage;
+  const currentPlayers = players.slice(indexOfFirstPlayer, indexOfLastPlayer);
+  const totalPages = Math.ceil(players.length / playersPerPage);
 
 
   const goToPage = (page: number) => {
@@ -121,7 +123,8 @@ const totalPages = Math.ceil(players.length / playersPerPage);
     <div className="min-h-screen bg-gray-50">
       <NavBar />
       
-      <div className="bg-gradient-to-r from-purple-600 via-blue-600 to-green-500 py-20">
+      {/* Ispravljen header sa ljubičasto-zelenim gradientom */}
+      <div className="bg-gradient-to-r from-purple-600 via-purple-600 to-green-500 py-20">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <div className="animate-fade-in">
             <div className="inline-flex items-center justify-center w-16 h-16 bg-white/20 rounded-full mb-6">
@@ -140,7 +143,7 @@ const totalPages = Math.ceil(players.length / playersPerPage);
       {/* Filters */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="bg-white rounded-lg shadow-sm p-6 mb-8">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">Search Players</label>
               <input
@@ -148,7 +151,7 @@ const totalPages = Math.ceil(players.length / playersPerPage);
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 placeholder="Search by name or team..."
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none transition-colors duration-200"
               />
             </div>
             
@@ -157,7 +160,7 @@ const totalPages = Math.ceil(players.length / playersPerPage);
               <Select
                 value={selectedTeam}
                 onChange={(e) => setSelectedTeam(e.target.value)}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none transition-colors duration-200"
               >
                 <option value="all">All Teams</option>
                 {uniqueTeams.map(team => (
@@ -165,12 +168,27 @@ const totalPages = Math.ceil(players.length / playersPerPage);
                 ))}
               </Select>
             </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Filter by Nation</label>
+              <Select
+                value={selectedNation}
+                onChange={(e) => setSelectedNation(e.target.value)}
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none transition-colors duration-200"
+              >
+                <option value="all">All Nations</option>
+                {uniqueNations.map(nation => (
+                  <option key={nation} value={nation}>{nation}</option>
+                ))}
+              </Select>
+            </div>
+            
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">Filter by Position</label>
               <Select
                 value={selectedPosition}
                 onChange={(e) => setSelectedPosition(e.target.value)}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none transition-colors duration-200"
               >
                 <option value="all">All Positions</option>
                 {uniquePositions.map(pos => (
@@ -250,15 +268,19 @@ const totalPages = Math.ceil(players.length / playersPerPage);
                 <div className="border-t pt-3">
                   <div className="flex justify-between items-center text-sm mb-2">
                     <span className="text-gray-600">Starts: {player.starts ?? 0}</span>
-                    <span className="text-gray-600">Min: {player.min ?? 0}</span>
+                    <div className="flex items-center space-x-2 text-sm text-gray-600 mt-3">
+                  <MapPin className="h-3 w-3" />
+                  <span>{player.nation || "-"}</span>
+                </div>
+                    {/* <span className="text-gray-600">Min: {player.min ?? 0}</span> */}
                   </div>
                 </div>
 
                 {/* Nationality */}
-                <div className="flex items-center space-x-2 text-sm text-gray-600 mt-3">
+                {/* <div className="flex items-center space-x-2 text-sm text-gray-600 mt-3">
                   <MapPin className="h-3 w-3" />
                   <span>{player.nation || "-"}</span>
-                </div>
+                </div> */}
               </div>
             </Card2>
           ))}
@@ -276,33 +298,69 @@ const totalPages = Math.ceil(players.length / playersPerPage);
         {/* Pagination */}
         {totalPages > 1 && (
           <div className="flex justify-center items-center space-x-2 mt-8">
-            <button
+            {/* <button
               onClick={() => goToPage(currentPage - 1)}
               disabled={currentPage === 1}
-              className="px-3 py-1 rounded bg-gray-200 disabled:opacity-50 hover:bg-gray-300"
+              className="px-3 py-1 rounded bg-gray-200 disabled:opacity-50 hover:bg-gray-300 transition-colors"
             >
               Prev
-            </button>
-            {[...Array(totalPages)].map((_, i) => (
-              <button
-                key={i}
-                onClick={() => goToPage(i + 1)}
-                className={`px-3 py-1 rounded ${
-                  currentPage === i + 1
-                    ? "bg-purple-600 text-white"
-                    : "bg-gray-200 hover:bg-gray-300"
-                }`}
-              >
-                {i + 1}
-              </button>
-            ))}
-            <button
+            </button> */}
+            {/* Pagination */}
+{totalPages > 1 && (
+  <div className="flex justify-center items-center flex-wrap gap-2 mt-8">
+    {/* Prev */}
+    <button
+      onClick={() => goToPage(currentPage - 1)}
+      disabled={currentPage === 1}
+      className="px-3 py-1 rounded bg-gray-200 disabled:opacity-50 hover:bg-gray-300 transition-colors"
+    >
+      Prev
+    </button>
+
+    {/* Dynamic page numbers */}
+    {Array.from({ length: totalPages }, (_, i) => i + 1)
+      .filter(page =>
+        page === 1 || 
+        page === totalPages || 
+        Math.abs(page - currentPage) <= 2 // prikazuje samo +-2 oko trenutne
+      )
+      .map((page, index, arr) => (
+        <React.Fragment key={page}>
+          {/* ako ima rupa između brojeva, dodaj "..." */}
+          {index > 0 && arr[index] - arr[index - 1] > 1 && (
+            <span className="px-2">...</span>
+          )}
+          <button
+            onClick={() => goToPage(page)}
+            className={`px-3 py-1 rounded transition-colors ${
+              currentPage === page
+                ? "bg-purple-600 text-white"
+                : "bg-gray-200 hover:bg-gray-300"
+            }`}
+          >
+            {page}
+          </button>
+        </React.Fragment>
+      ))
+    }
+
+    {/* Next */}
+    <button
+      onClick={() => goToPage(currentPage + 1)}
+      disabled={currentPage === totalPages}
+      className="px-3 py-1 rounded bg-gray-200 disabled:opacity-50 hover:bg-gray-300 transition-colors"
+    >
+      Next
+    </button>
+  </div>
+)}
+            {/* <button
               onClick={() => goToPage(currentPage + 1)}
               disabled={currentPage === totalPages}
-              className="px-3 py-1 rounded bg-gray-200 disabled:opacity-50 hover:bg-gray-300"
+              className="px-3 py-1 rounded bg-gray-200 disabled:opacity-50 hover:bg-gray-300 transition-colors"
             >
               Next
-            </button>
+            </button> */}
           </div>
         )}
       </div>

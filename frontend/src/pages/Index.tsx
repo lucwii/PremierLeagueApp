@@ -44,7 +44,7 @@ const Index = () => {
         style={{ backgroundImage: `url(${premierLeagueHero})` }}
       />
       {/* Gradient overlay */}
-      <div className="absolute inset-0 bg-purple-900/50" />
+      <div className="absolute inset-0 bg-gradient-to-r from-purple-900 via-purple-800/20 to-green-400" />
 
       {/* Content */}
       <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24 md:py-32">
